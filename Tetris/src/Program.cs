@@ -14,7 +14,6 @@ namespace Tetris {
     class Program {
 
         static void Main(string[] args) {
-
             App app = App.instance;
             GameController controller = new GameController();
 

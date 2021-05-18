@@ -21,24 +21,21 @@ namespace Tetris.src.controller {
         private Sprite totalBlocksSprite;
         private RectangleShape frame;
 
-        private bool onGround;
         private Block block;
         private List<List<RectangleShape>> totalBlocks;
 
         static GameController() {
             BOUND = new Vector2f(300, 500);
-            UPDATE_TIME = 1f;
+            UPDATE_TIME = 0.5f;
             factory = BlockFactory.init(BOUND);
         }
 
         public GameController() {
-
+            App.instance.update += update;
+            App.instance.KeyPressed += keyPressed;
         }
 
         public void init() {
-            App.instance.update += update;
-            App.instance.KeyPressed += keyPressed;
-
             windowSize = App.instance.Size;
             block = factory.generateBlock();
             totalBlocks = new List<List<RectangleShape>>((int)windowSize.Y / 20);
@@ -74,62 +71,17 @@ namespace Tetris.src.controller {
                 block.move(ConstantPool.BLOCK_OFFSET_DOWN);
                 clock.Restart();
 
-                for (int i = 0; i < ConstantPool.BLOCK_PARTS; i++) {
-                    if ((block.getPosition(i).Y <= windowSize.Y - 20) && isCollide()) {
-                        onGround = true;
-                        break;
-                    }
-                }
-                if (onGround) {
-                    for (int i = 0; i < ConstantPool.BLOCK_PARTS; i++) {
-                        int row = (int)(windowSize.Y - block.getPosition(i).Y) / 20 - 1;
-                        block.getAt(i).Position = block.getPosition(i);
-                        totalBlocks[row].Add(block.getAt(i));
-                    }
+                if (isCollide()) {
+                    transformToTotalBlocks();
 
-                    int fullRow = -1;
-                    int deletedRows = 0;
-                    for (int i = 0; i < totalBlocks.Count; i++) {
-                        if (totalBlocks[i].Count == 15) {
-                            fullRow = i;
-                            break;
-                        }
-                    }
-                    while (fullRow != -1 && totalBlocks[fullRow].Count == 15) {
-                        for (int i = 0; i < totalBlocks[fullRow].Count; i++) {
-                            totalBlocks[fullRow][i].Dispose();
-                        }
-                        totalBlocks[fullRow].Clear();
-
-                        deletedRows++;
-                        for (int i = 0; i < totalBlocks[fullRow + deletedRows].Count; i++) {
-                            totalBlocks[fullRow + deletedRows][i].Position += ConstantPool.BLOCK_OFFSET_DOWN * deletedRows;
-                        }
-                        totalBlocks[fullRow].AddRange(totalBlocks[fullRow + deletedRows]);
-                        totalBlocks[fullRow + deletedRows].Clear();
-                    }
+                    int fullRow = getFirstFullRow();
                     if (fullRow != -1) {
-                        for (int i = fullRow + deletedRows + 1; i < totalBlocks.Count; i++) {
-                            totalBlocks[i - deletedRows].AddRange(totalBlocks[i]);
-                            totalBlocks[i].Clear();
-
-                            for (int j = 0; j < totalBlocks[i - deletedRows].Count; j++) {
-                                totalBlocks[i - deletedRows][j].Position += ConstantPool.BLOCK_OFFSET_DOWN * deletedRows;
-                            }
-                        }
+                        destroyFullRows(fullRow);
                     }
+                    redrawTotalBlocks();
 
-                    texture.Clear(Color.Transparent);
-                    foreach (List<RectangleShape> row in totalBlocks) {
-                        foreach (RectangleShape rect in row) {
-                            texture.Draw(rect);
-                        }
-                    }
-                    texture.Display();
-
-                    block.destroy();
+                    block.Dispose();
                     block = factory.generateBlock();
-                    onGround = false;
                 }
             }
         }
@@ -148,6 +100,58 @@ namespace Tetris.src.controller {
                 }
             }
             return false;
+        }
+
+        private void transformToTotalBlocks() {
+            for (int j = 0; j < ConstantPool.BLOCK_PARTS; j++) {
+                int row = (int)(windowSize.Y - block.getPosition(j).Y) / (int)ConstantPool.BLOCK_SIZE.X - 1;
+                block.getAt(j).Position = block.getPosition(j);
+                totalBlocks[row].Add(block.getAt(j));
+            }
+        }
+
+        private int getFirstFullRow() {
+            for (int i = 0; i < totalBlocks.Count; i++) {
+                if (totalBlocks[i].Count == ConstantPool.ROW_WIDTH) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        private void destroyFullRows(int firstFullRow) {
+            int deletedRows = 0;
+            while (totalBlocks[firstFullRow].Count == ConstantPool.ROW_WIDTH) {
+                for (int i = 0; i < totalBlocks[firstFullRow].Count; i++) {
+                    totalBlocks[firstFullRow][i].Dispose();
+                }
+                totalBlocks[firstFullRow].Clear();
+
+                deletedRows++;
+                for (int i = 0; i < totalBlocks[firstFullRow + deletedRows].Count; i++) {
+                    totalBlocks[firstFullRow + deletedRows][i].Position += ConstantPool.BLOCK_OFFSET_DOWN * deletedRows;
+                }
+                totalBlocks[firstFullRow].AddRange(totalBlocks[firstFullRow + deletedRows]);
+                totalBlocks[firstFullRow + deletedRows].Clear();
+            }
+            for (int i = firstFullRow + deletedRows + 1; i < totalBlocks.Count; i++) {
+                totalBlocks[i - deletedRows].AddRange(totalBlocks[i]);
+                totalBlocks[i].Clear();
+
+                for (int j = 0; j < totalBlocks[i - deletedRows].Count; j++) {
+                    totalBlocks[i - deletedRows][j].Position += ConstantPool.BLOCK_OFFSET_DOWN * deletedRows;
+                }
+            }
+        }
+
+        private void redrawTotalBlocks() {
+            texture.Clear(Color.Transparent);
+            foreach (List<RectangleShape> row in totalBlocks) {
+                foreach (RectangleShape rect in row) {
+                    texture.Draw(rect);
+                }
+            }
+            texture.Display();
         }
 
         private void keyPressed(Object e, KeyEventArgs args) {

@@ -3,10 +3,11 @@ using SFML.System;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Tetris.src.system;
 
 namespace Tetris.src.blocks {
 
-    public abstract class Block : Drawable {
+    public abstract class Block : Drawable, IDisposable {
 
         private static Random random;
         private static Dictionary<int, Color> colors;
@@ -30,10 +31,10 @@ namespace Tetris.src.blocks {
         protected readonly RectangleShape[] blocks;
 
         public Block(Vector2f position) {
-            blocks = new RectangleShape[4];
-            Color color = colors[random.Next(6)];
-            for (int i = 0; i < 4; i++) {
-                blocks[i] = new RectangleShape(new Vector2f(20, 20));
+            blocks = new RectangleShape[ConstantPool.BLOCK_PARTS];
+            Color color = colors[random.Next(colors.Count)];
+            for (int i = 0; i < ConstantPool.BLOCK_PARTS; i++) {
+                blocks[i] = new RectangleShape(ConstantPool.BLOCK_SIZE);
                 blocks[i].FillColor = color;
             }
 
@@ -61,11 +62,6 @@ namespace Tetris.src.blocks {
             texture.Display();
         }
 
-        public void destroy() {
-            texture.Dispose();
-            sprite.Dispose();
-        }
-
         public void move(Vector2f offset) {
             sprite.Position += offset;
         }
@@ -80,6 +76,11 @@ namespace Tetris.src.blocks {
 
         public void Draw(RenderTarget target, RenderStates states) {
             target.Draw(sprite);
+        }
+
+        public void Dispose() {
+            texture.Dispose();
+            sprite.Dispose();
         }
     }
 }
