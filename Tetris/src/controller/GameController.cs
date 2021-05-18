@@ -11,13 +11,9 @@ namespace Tetris.src.controller {
 
     class GameController : Controller {
 
-        private static Vector2f OFFSET_DOWN;
-        private static Vector2f OFFSET_LEFT;
-        private static Vector2f OFFSET_RIGHT;
         private static Vector2f BOUND;
         private static BlockFactory factory;
         private static float UPDATE_TIME;
-        private static int ROW_WIDTH;
 
         private Clock clock;
         private Vector2u windowSize;
@@ -30,12 +26,8 @@ namespace Tetris.src.controller {
         private List<List<RectangleShape>> totalBlocks;
 
         static GameController() {
-            OFFSET_DOWN = new Vector2f(0, 20);
-            OFFSET_LEFT = new Vector2f(-20, 0);
-            OFFSET_RIGHT = new Vector2f(20, 0);
             BOUND = new Vector2f(300, 500);
             UPDATE_TIME = 1f;
-            ROW_WIDTH = 15;
             factory = BlockFactory.init(BOUND);
         }
 
@@ -51,7 +43,7 @@ namespace Tetris.src.controller {
             block = factory.generateBlock();
             totalBlocks = new List<List<RectangleShape>>((int)windowSize.Y / 20);
             for (int i = 0; i < totalBlocks.Capacity; i++) {
-                totalBlocks.Add(new List<RectangleShape>(ROW_WIDTH));
+                totalBlocks.Add(new List<RectangleShape>(ConstantPool.ROW_WIDTH));
             }
             frame = new RectangleShape(new Vector2f(300, windowSize.Y));
             frame.Position = new Vector2f(240, 0);
@@ -79,7 +71,7 @@ namespace Tetris.src.controller {
 
             if (clock.ElapsedTime.AsSeconds() > UPDATE_TIME) {
                 UPDATE_TIME = 1f;
-                block.move(OFFSET_DOWN);
+                block.move(ConstantPool.BLOCK_OFFSET_DOWN);
                 clock.Restart();
 
                 for (int i = 0; i < ConstantPool.BLOCK_PARTS; i++) {
@@ -111,7 +103,7 @@ namespace Tetris.src.controller {
 
                         deletedRows++;
                         for (int i = 0; i < totalBlocks[fullRow + deletedRows].Count; i++) {
-                            totalBlocks[fullRow + deletedRows][i].Position += OFFSET_DOWN * deletedRows;
+                            totalBlocks[fullRow + deletedRows][i].Position += ConstantPool.BLOCK_OFFSET_DOWN * deletedRows;
                         }
                         totalBlocks[fullRow].AddRange(totalBlocks[fullRow + deletedRows]);
                         totalBlocks[fullRow + deletedRows].Clear();
@@ -122,7 +114,7 @@ namespace Tetris.src.controller {
                             totalBlocks[i].Clear();
 
                             for (int j = 0; j < totalBlocks[i - deletedRows].Count; j++) {
-                                totalBlocks[i - deletedRows][j].Position += OFFSET_DOWN * deletedRows;
+                                totalBlocks[i - deletedRows][j].Position += ConstantPool.BLOCK_OFFSET_DOWN * deletedRows;
                             }
                         }
                     }
@@ -161,10 +153,10 @@ namespace Tetris.src.controller {
         private void keyPressed(Object e, KeyEventArgs args) {
             switch (args.Code) {
                 case Keyboard.Key.A:
-                    block.move(OFFSET_LEFT);
+                    block.move(ConstantPool.BLOCK_OFFSET_LEFT);
                     return;
                 case Keyboard.Key.D:
-                    block.move(OFFSET_RIGHT);
+                    block.move(ConstantPool.BLOCK_OFFSET_RIGHT);
                     return;
                 case Keyboard.Key.Space:
                     block.rotate();

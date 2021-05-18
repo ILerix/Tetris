@@ -8,16 +8,21 @@ namespace Tetris.src.blocks {
 
     public abstract class Block : Drawable {
 
-        private static Random random = new Random();
-        private static Dictionary<int, Color> colors = new Dictionary<int, Color>()
-        {
-            { 0, Color.White },
-            { 1, Color.Green },
-            { 2, Color.Red },
-            { 3, Color.Yellow },
-            { 4, Color.Magenta },
-            { 5, Color.Blue }
-        };
+        private static Random random;
+        private static Dictionary<int, Color> colors;
+
+        static Block() {
+            random = new Random();
+            colors = new Dictionary<int, Color>() {
+                { 0, Color.White },
+                { 1, Color.Green },
+                { 2, Color.Red },
+                { 3, Color.Yellow },
+                { 4, Color.Magenta },
+                { 5, Color.Blue }
+            };
+        }
+
         private Sprite sprite;
 
         protected int angle = 0;
