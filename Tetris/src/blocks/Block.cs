@@ -2,6 +2,7 @@
 using SFML.System;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Tetris.src.system;
 
@@ -48,18 +49,18 @@ namespace Tetris.src.blocks {
 
         protected abstract bool rotateBlocks();
 
-        public void rotate() {
-            if (rotateBlocks()) {
-                drawBlocks();
-            }
-        }
-
         protected void drawBlocks() {
             texture.Clear();
             foreach (var rect in blocks) {
                 texture.Draw(rect);
             }
             texture.Display();
+        }
+
+        public void rotate() {
+            if (rotateBlocks()) {
+                drawBlocks();
+            }
         }
 
         public void move(Vector2f offset) {
@@ -72,6 +73,13 @@ namespace Tetris.src.blocks {
 
         public RectangleShape getAt(int idx) {
             return blocks[idx];
+        }
+
+        public Vector2f getGlobalBoundsByX() {
+            float minX = blocks.Min(b => b.Position.X);
+            float maxX = blocks.Max(b => b.Position.X);
+
+            return new Vector2f(minX + sprite.Position.X, maxX + sprite.Position.X);
         }
 
         public void Draw(RenderTarget target, RenderStates states) {
