@@ -11,12 +11,12 @@ namespace Tetris.src.controller {
 
     class GameController : Controller {
 
-        private static Vector2f BOUND;
+        private static Vector2f SPAWN_BOUND;
+        private static Vector2u windowSize;
         private static BlockFactory factory;
         private static float UPDATE_TIME;
 
         private Clock clock;
-        private Vector2u windowSize;
         private RenderTexture texture;
         private Sprite totalBlocksSprite;
         private RectangleShape frame;
@@ -25,9 +25,8 @@ namespace Tetris.src.controller {
         private List<List<RectangleShape>> totalBlocks;
 
         static GameController() {
-            BOUND = new Vector2f(300, 500);
             UPDATE_TIME = 0.5f;
-            factory = BlockFactory.init(BOUND);
+            windowSize = App.instance.Size;
         }
 
         public GameController() {
@@ -36,17 +35,19 @@ namespace Tetris.src.controller {
         }
 
         public void init() {
-            windowSize = App.instance.Size;
-            block = factory.generateBlock();
-            totalBlocks = new List<List<RectangleShape>>((int)windowSize.Y / 20);
-            for (int i = 0; i < totalBlocks.Capacity; i++) {
-                totalBlocks.Add(new List<RectangleShape>(ConstantPool.ROW_WIDTH));
-            }
             frame = new RectangleShape(new Vector2f(300, windowSize.Y));
             frame.Position = new Vector2f(240, 0);
             frame.FillColor = Color.Transparent;
             frame.OutlineColor = Color.White;
             frame.OutlineThickness = 1;
+
+            SPAWN_BOUND = new Vector2f(frame.Position.X, frame.Position.X + frame.Size.X);
+            factory = BlockFactory.init(SPAWN_BOUND);
+            block = factory.generateBlock();
+            totalBlocks = new List<List<RectangleShape>>((int)windowSize.Y / 20);
+            for (int i = 0; i < totalBlocks.Capacity; i++) {
+                totalBlocks.Add(new List<RectangleShape>(ConstantPool.ROW_WIDTH));
+            }
 
             texture = new RenderTexture(windowSize.X, windowSize.Y);
             texture.Clear(Color.Transparent);
@@ -154,20 +155,31 @@ namespace Tetris.src.controller {
             texture.Display();
         }
 
+        private void checkOutBoundsAndTryMove() {
+            Vector2f blockBounds = block.getGlobalBoundsByX();
+            if (blockBounds.X < frame.Position.X) {
+                block.move(ConstantPool.BLOCK_OFFSET_RIGHT * ((frame.Position.X - blockBounds.X) / ConstantPool.BLOCK_SIZE.X));
+            } else if (blockBounds.Y > frame.Position.X + frame.Size.X - ConstantPool.BLOCK_SIZE.X) {
+                block.move(ConstantPool.BLOCK_OFFSET_LEFT * 
+                    ((frame.Position.X + frame.Size.X - blockBounds.Y) / ConstantPool.BLOCK_SIZE.X + 1));
+            }
+        }
+
         private void keyPressed(Object e, KeyEventArgs args) {
             switch (args.Code) {
                 case Keyboard.Key.A:
                     block.move(ConstantPool.BLOCK_OFFSET_LEFT);
-                    return;
+                    break;
                 case Keyboard.Key.D:
                     block.move(ConstantPool.BLOCK_OFFSET_RIGHT);
-                    return;
+                    break;
                 case Keyboard.Key.Space:
                     block.rotate();
-                    return;
+                    break;
                 default:
                     return;
             }
+            checkOutBoundsAndTryMove();
         }
 
     }
